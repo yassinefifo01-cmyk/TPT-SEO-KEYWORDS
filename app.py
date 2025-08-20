@@ -153,8 +153,6 @@ with st.sidebar:
         default=["3rd Grade"]
 )
 
-)
-
     resource_type = st.selectbox("Resource Type", ["Worksheet", "Activities", "Lesson Plan"], index=0)
     focus = st.text_input("Focus / Topic", value="Fractions")
     formats = st.multiselect("Formats", ["Printable", "Digital"], default=["Printable", "Digital"])
