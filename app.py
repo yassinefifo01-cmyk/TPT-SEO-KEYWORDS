@@ -1,128 +1,64 @@
 import streamlit as st
 import nltk
+import easyocr
+import tempfile
 from PIL import Image
-# (other imports)
 
-# ⬇️ This must come before any other Streamlit calls
-st.set_page_config(page_title="TPT SEO Generator", page_icon="📚", layout="wide")
-# app.py
-import re
-import csv
-import io
-import math
-import random
-import itertools
-from datetime import date
-from typing import List, Dict
-
-import streamlit as st
-import nltk
-from nltk.stem import WordNetLemmatizer
-
-from PIL import Image
-import pytesseract
-
-# -----------------------------
-# NLTK Setup
-# -----------------------------
+# Download NLTK data
+nltk.download("punkt")
 nltk.download("wordnet")
 nltk.download("omw-1.4")
 
-lemmatizer = WordNetLemmatizer()
+# ------------------------------------------------------------
+# Page Config (must be first Streamlit call!)
+# ------------------------------------------------------------
+st.set_page_config(
+    page_title="TPT SEO Generator",
+    page_icon="📚",
+    layout="wide"
+)
 
-# -----------------------------
-# Utility Functions
-# -----------------------------
-def slugify(s: str) -> str:
-    s = re.sub(r"[^\w\s-]", "", s, flags=re.U).strip().lower()
-    return re.sub(r"[-\s]+", "-", s, flags=re.U)
+st.title("📚 TPT SEO Generator with Thumbnail Support")
+st.write("Generate SEO-optimized titles, descriptions, and keyword clusters for Teachers Pay Teachers resources.")
 
-def uniq(seq):
-    seen = set()
-    out = []
-    for x in seq:
-        if x not in seen:
-            out.append(x)
-            seen.add(x)
-    return out
+# ------------------------------------------------------------
+# Description generator
+# ------------------------------------------------------------
+def generate_description(subject, grades, resource_type, focus, formats, standards, word_goal):
+    grade_text = ", ".join(grades)
+    format_text = " and ".join(formats)
 
-def title_case(s: str) -> str:
-    return re.sub(r"\s+", " ", s).strip().title()
-
-def join_with_and(items: List[str]) -> str:
-    items = [i for i in items if i]
-    if not items: return ""
-    if len(items) == 1: return items[0]
-    return ", ".join(items[:-1]) + " and " + items[-1]
-
-def soft_cap(text: str, limit: int) -> str:
-    if len(text) <= limit: return text
-    cut = text[:limit].rsplit(" ", 1)[0]
-    return cut + "…"
-
-# -----------------------------
-# SEO Helpers
-# -----------------------------
-def keyword_candidates(subject: str, grades: List[str], resource_type: str, focus: str, extras: Dict) -> List[str]:
-    g = [re.sub(r"grade\s*", "", gr, flags=re.I).strip() for gr in grades] or [""]
-    gnorm = [f"grade {x}".strip() for x in g if x]
-    base = [
-        subject, resource_type, focus,
-        f"{focus} {resource_type}",
-        f"{subject} {focus}",
-        f"{join_with_and(gnorm)} {resource_type}",
-        f"{focus} activities",
-        f"{focus} worksheets",
-        f"{focus} lesson plans",
-    ]
-    raw = [k.strip().lower() for k in base]
-    cleaned = uniq([re.sub(r"\s+", " ", k).strip() for k in raw if k])
-    return cleaned
-
-def score_title(title: str, focus_terms: List[str]) -> Dict:
-    length = len(title)
-    length_score = 1.0 if 40 <= length <= 100 else 0.7
-    presence = sum(1 for t in focus_terms if t.lower() in title.lower())
-    presence_score = min(1.0, presence / max(1, len(focus_terms)))
-    score = round((0.6 * length_score + 0.4 * presence_score), 2)
-    return {"length": length, "score": min(score, 1.0)}
-
-def score_description(desc: str, focus_terms: List[str]) -> Dict:
-    length = len(desc)
-    presence = sum(1 for t in focus_terms if t.lower() in desc.lower())
-    length_score = 1.0 if 300 <= length <= 900 else 0.7
-    presence_score = min(1.0, presence / max(1, len(focus_terms)))
-    score = round((0.6 * length_score + 0.4 * presence_score), 2)
-    return {"length": length, "score": min(score, 1.0)}
-
-# -----------------------------
-# Generators
-# -----------------------------
-TITLE_TEMPLATES = [
-    "{Focus} {Resource} for {Grades} | {Subject}",
-    "{Grades} {Subject}: {Focus} {Resource}",
-    "Engaging {Focus} {Resource} for {Grades} | Printable & Digital",
-]
-
-def format_short(formats: List[str]) -> str:
-    if not formats: return "Printable & Digital"
-    fm = [f.title() for f in formats]
-    return join_with_and(fm)
-
-def generate_title(subject: str, grades: List[str], resource_type: str, focus: str, formats: List[str]) -> str:
-    gtxt = join_with_and(grades) if grades else ""
-    template = random.choice(TITLE_TEMPLATES)
-    title = template.format(
-        Focus=title_case(focus),
-        Resource=title_case(resource_type),
-        Grades=gtxt,
-        Subject=title_case(subject),
+    desc = (
+        f"This {resource_type.lower()} is designed for {grade_text} students learning {subject.lower()}. "
+        f"It provides engaging activities on {focus.lower()} with {format_text} options, making it easy to use "
+        f"in the classroom or for homework. "
     )
-    return soft_cap(re.sub(r"\s+", " ", title).strip(), 110)
 
+    if standards:
+        desc += f"This resource is fully aligned with {standards}, ensuring it meets curriculum expectations. "
+
+    desc += (
+        f"Inside, you'll find step-by-step materials that build student confidence, "
+        f"support differentiation, and save you preparation time. "
+        f"Perfect for guided practice, independent work, or review. "
+    )
+
+    # Pad description until target word count
+    while len(desc.split()) < word_goal:
+        desc += (
+            " Teachers love how flexible and engaging this resource is, making it a must-have for "
+            "any classroom looking to strengthen skills while keeping students motivated. "
+        )
+
+    return desc.strip()
+
+# ------------------------------------------------------------
+# Sidebar inputs
+# ------------------------------------------------------------
 with st.sidebar:
     st.header("Inputs")
     subject = st.text_input("Subject", value="Math")
+
     grades = st.multiselect(
         "Grade Level(s)",
         [
@@ -133,11 +69,25 @@ with st.sidebar:
             "3rd Grade",
             "4th Grade",
             "5th Grade",
-            "6th Grade"
+            "6th Grade",
+            "7th Grade",
+            "8th Grade",
+            "9th Grade",
+            "10th Grade",
+            "11th Grade",
+            "12th Grade",
+            "Homeschool",
+            "Staff"
         ],
         default=["3rd Grade"]
     )
-    resource_type = st.selectbox("Resource Type", ["Worksheet", "Activities", "Lesson Plan"], index=0)
+
+    resource_type = st.selectbox(
+        "Resource Type",
+        ["Worksheet", "Activities", "Lesson Plan", "Task Cards", "Quiz", "Project", "Assessment"],
+        index=0
+    )
+
     focus = st.text_input("Focus / Topic", value="Fractions")
     formats = st.multiselect("Formats", ["Printable", "Digital"], default=["Printable", "Digital"])
     standards = st.text_input("Standards (optional)", value="CCSS")
@@ -147,86 +97,43 @@ with st.sidebar:
     st.header("Thumbnail Upload (optional)")
     thumbnail_file = st.file_uploader("Upload a product thumbnail (PNG or JPEG)", type=["png", "jpeg"])
 
+# ------------------------------------------------------------
+# Process Thumbnail with EasyOCR
+# ------------------------------------------------------------
+thumbnail_text = ""
+if thumbnail_file is not None:
+    try:
+        image = Image.open(thumbnail_file)
+        st.image(image, caption="Uploaded Thumbnail", use_container_width=True)
 
-# -----------------------------
-# Streamlit UI
-# -----------------------------
-st.set_page_config(page_title="TPT SEO Generator", page_icon="🧑‍🏫", layout="wide")
-st.title("🧑‍🏫 TPT SEO Generator with Thumbnail Support")
+        # Save to temp file for OCR
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".png") as tmp_file:
+            image.save(tmp_file.name)
+            reader = easyocr.Reader(['en'], verbose=False)
+            result = reader.readtext(tmp_file.name, detail=0)
+            thumbnail_text = " ".join(result)
 
-# Sidebar inputs
-with st.sidebar:
-    st.header("Inputs")
-    subject = st.text_input("Subject", value="Math")
-    grades = st.multiselect(
-        "Grade Level(s)",
-        [
-            "Preschool",
-            "Kindergarten",
-            "1st Grade",
-            "2nd Grade",
-            "3rd Grade",
-            "4th Grade",
-            "5th Grade",
-            "6th Grade"
-        ],
-        default=["3rd Grade"]
-)
+        if thumbnail_text:
+            st.success("Extracted text from thumbnail to boost SEO keywords!")
+            st.write(thumbnail_text)
+    except Exception as e:
+        st.error(f"Error reading thumbnail: {e}")
 
-    resource_type = st.selectbox("Resource Type", ["Worksheet", "Activities", "Lesson Plan"], index=0)
-    focus = st.text_input("Focus / Topic", value="Fractions")
-    formats = st.multiselect("Formats", ["Printable", "Digital"], default=["Printable", "Digital"])
-    standards = st.text_input("Standards (optional)", value="CCSS")
-    tone = st.select_slider("Tone", options=["neutral", "professional", "enthusiastic"], value="enthusiastic")
-    word_goal = st.slider("Description target words", 120, 600, 280, step=20)
-    n_variations = st.slider("How many variations?", 1, 5, 3)
-
-    # 🔹 Thumbnail upload
-    st.header("Thumbnail Upload (optional)")
-    thumbnail = st.file_uploader("Upload product thumbnail", type=["png", "jpg", "jpeg"])
-
-    thumbnail_text = ""
-    if thumbnail is not None:
-        image = Image.open(thumbnail)
-        st.image(image, caption="Uploaded Thumbnail", use_column_width=True)
-        thumbnail_text = pytesseract.image_to_string(image)
-        if thumbnail_text.strip():
-            st.markdown("**Extracted text from thumbnail:**")
-            st.code(thumbnail_text.strip())
-
-    gen_btn = st.button("🚀 Generate")
-
-# -----------------------------
-# Generation
-# -----------------------------
-if gen_btn:
+# ------------------------------------------------------------
+# Generate output
+# ------------------------------------------------------------
+if st.button("Generate SEO Titles & Descriptions"):
     st.subheader("Generated Variations")
-    all_rows = []
-    for _ in range(n_variations):
-        title = generate_title(subject, grades, resource_type, focus, formats)
-        desc = generate_description(subject, grades, resource_type, focus, formats, standards, tone, word_goal)
 
-        # 🔹 Use thumbnail text in description
-        if thumbnail_text.strip():
-            desc += f" Thumbnail highlights: {thumbnail_text.strip()}"
+    for i in range(n_variations):
+        title = f"{subject} {focus} {resource_type} for {', '.join(grades)}"
+        if thumbnail_text:
+            title += f" | {thumbnail_text[:40]}"
 
-        keywords = ", ".join(keyword_candidates(subject, grades, resource_type, focus, {}))
-        tscore = score_title(title, [focus.lower(), subject.lower(), resource_type.lower()])
-        dscore = score_description(desc, [focus.lower(), subject.lower(), resource_type.lower()])
+        description = generate_description(
+            subject, grades, resource_type, focus, formats, standards, word_goal
+        )
 
-        with st.container(border=True):
-            st.markdown(f"**Title:** {title}")
-            st.markdown(f"**Description:** {desc}")
-            st.markdown(f"**Keywords:** {keywords}")
-            st.caption(f"Title score: {tscore['score']} • Description score: {dscore['score']}")
-
-        all_rows.append({"title": title, "description": desc, "keywords": keywords})
-
-    # CSV Export
-    csv_buf = io.StringIO()
-    writer = csv.DictWriter(csv_buf, fieldnames=list(all_rows[0].keys()))
-    writer.writeheader()
-    for r in all_rows:
-        writer.writerow(r)
-    st.download_button("⬇️ Download CSV", data=csv_buf.getvalue().encode("utf-8"),
-                       file_name=f"tpt_seo_{date.today().isoformat()}.csv", mime="text/csv")
+        st.markdown(f"### ✨ Variation {i+1}")
+        st.markdown(f"**Title:** {title}")
+        st.write(description)
