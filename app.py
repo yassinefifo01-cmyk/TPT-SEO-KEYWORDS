@@ -113,20 +113,35 @@ def generate_title(subject: str, grades: List[str], resource_type: str, focus: s
     )
     return soft_cap(re.sub(r"\s+", " ", title).strip(), 110)
 
-def generate_description(subject: str, grades: List[str], resource_type: str, focus: str, formats: List[str],
-                         standards: str, tone: str, word_goal: int = 300) -> str:
-    subject_lower = subject.lower()
-    focus_lower = focus.lower()
-    grades_txt = join_with_and(grades) if grades else ""
-    resource_lower = resource_type.lower()
-    fmt = format_short(formats)
+def generate_description(subject, grades, resource_type, focus, formats, standards, tone, word_goal):
+    grade_text = ", ".join(grades)
+    format_text = " and ".join(formats)
 
     desc = (
-        f"Help your {grades_txt.lower()} {subject_lower} students master **{focus_lower}** "
-        f"with this {resource_lower}. It’s low-prep and comes in {fmt.lower()} for flexible teaching. "
-        f"Perfect for centers, homework, or review."
+        f"This {tone} {resource_type.lower()} is designed for {grade_text} students learning {subject.lower()}. "
+        f"It provides engaging activities on {focus.lower()} with {format_text} options, so you can easily use it "
+        f"in the classroom or for homework. "
     )
+
+    if standards:
+        desc += f"The resource is fully aligned with {standards}, ensuring it meets curriculum expectations. "
+
+    # Expand with teaching benefits
+    desc += (
+        f"Inside, you'll find step-by-step materials that help build student confidence, "
+        f"support differentiation, and save you preparation time. "
+        f"It’s perfect for guided practice, independent work, or review. "
+    )
+
+    # Pad description to hit word goal
+    while len(desc.split()) < word_goal:
+        desc += (
+            " Teachers love how flexible and easy-to-use this resource is, making it a must-have for "
+            "any educator looking to reinforce skills while keeping students engaged. "
+        )
+
     return desc.strip()
+
 
 # -----------------------------
 # Streamlit UI
