@@ -143,7 +143,6 @@ with st.sidebar:
     focus = st.text_input("Focus / Topic", value="Fractions")
     formats = st.multiselect("Formats", ["Printable", "Digital"], default=["Printable", "Digital"])
     standards = st.text_input("Standards (optional)", value="CCSS")
-    tone = st.select_slider("Tone", options=["neutral", "professional", "enthusiastic"], value="enthusiastic")
     word_goal = st.slider("Description target words", 120, 600, 280, step=20)
     n_variations = st.slider("How many variations?", 1, 5, 3)
 
