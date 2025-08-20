@@ -15,6 +15,11 @@ from nltk.stem import WordNetLemmatizer
 # -----------------------------
 # Utilities
 # -----------------------------
+import nltk
+
+# Ensure WordNet is downloaded
+nltk.download('wordnet')
+nltk.download('omw-1.4')
 lemmatizer = WordNetLemmatizer()
 
 def slugify(s: str) -> str:
