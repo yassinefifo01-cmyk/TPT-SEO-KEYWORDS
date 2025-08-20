@@ -113,12 +113,12 @@ def generate_title(subject: str, grades: List[str], resource_type: str, focus: s
     )
     return soft_cap(re.sub(r"\s+", " ", title).strip(), 110)
 
-def generate_description(subject, grades, resource_type, focus, formats, standards, tone, word_goal):
+def generate_description(subject, grades, resource_type, focus, formats, standards, word_goal):
     grade_text = ", ".join(grades)
     format_text = " and ".join(formats)
 
     desc = (
-        f"This {tone} {resource_type.lower()} is designed for {grade_text} students learning {subject.lower()}. "
+        f"This {resource_type.lower()} is designed for {grade_text} students learning {subject.lower()}. "
         f"It provides engaging activities on {focus.lower()} with {format_text} options, so you can easily use it "
         f"in the classroom or for homework. "
     )
@@ -136,7 +136,7 @@ def generate_description(subject, grades, resource_type, focus, formats, standar
     # Pad description to hit word goal
     while len(desc.split()) < word_goal:
         desc += (
-            " Teachers love how flexible and easy-to-use this resource is, making it a must-have for "
+            " Teachers appreciate how flexible and easy-to-use this resource is, making it a must-have for "
             "any educator looking to reinforce skills while keeping students engaged. "
         )
 
