@@ -3,8 +3,6 @@ import nltk
 import easyocr
 import tempfile
 from PIL import Image
-from collections import Counter
-import re
 
 # Download NLTK data
 nltk.download("punkt")
@@ -12,7 +10,7 @@ nltk.download("wordnet")
 nltk.download("omw-1.4")
 
 # ------------------------------------------------------------
-# Page Config
+# Page Config (must be first Streamlit call!)
 # ------------------------------------------------------------
 st.set_page_config(
     page_title="TPT SEO Generator",
@@ -20,7 +18,7 @@ st.set_page_config(
     layout="wide"
 )
 
-st.title("📚 TPT SEO Generator with Thumbnail Support & Keywords")
+st.title("📚 TPT SEO Generator with Thumbnail Support")
 st.write("Generate SEO-optimized titles, descriptions, and keyword clusters for Teachers Pay Teachers resources.")
 
 # ------------------------------------------------------------
@@ -53,22 +51,6 @@ def generate_description(subject, grades, resource_type, focus, formats, standar
         )
 
     return desc.strip()
-
-# ------------------------------------------------------------
-# Keyword extractor
-# ------------------------------------------------------------
-def extract_keywords(text, n=15):
-    # Clean text
-    text = text.lower()
-    words = re.findall(r"[a-zA-Z]+", text)
-
-    # Remove stopwords
-    stopwords = set(nltk.corpus.stopwords.words("english"))
-    words = [w for w in words if w not in stopwords and len(w) > 2]
-
-    # Count frequency
-    freq = Counter(words)
-    return [w for w, _ in freq.most_common(n)]
 
 # ------------------------------------------------------------
 # Sidebar inputs
@@ -143,8 +125,6 @@ if thumbnail_file is not None:
 if st.button("Generate SEO Titles & Descriptions"):
     st.subheader("Generated Variations")
 
-    base_text = f"{subject} {focus} {resource_type} {' '.join(grades)} {thumbnail_text}"
-
     for i in range(n_variations):
         title = f"{subject} {focus} {resource_type} for {', '.join(grades)}"
         if thumbnail_text:
@@ -154,10 +134,6 @@ if st.button("Generate SEO Titles & Descriptions"):
             subject, grades, resource_type, focus, formats, standards, word_goal
         )
 
-        # Extract SEO keywords
-        keywords = extract_keywords(base_text + " " + description, n=12)
-
         st.markdown(f"### ✨ Variation {i+1}")
         st.markdown(f"**Title:** {title}")
         st.write(description)
-        st.markdown("**SEO Keywords:** " + ", ".join(keywords))
