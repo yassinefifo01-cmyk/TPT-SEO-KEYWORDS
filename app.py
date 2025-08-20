@@ -138,7 +138,7 @@ st.title("🧑‍🏫 TPT SEO Generator with Thumbnail Support")
 with st.sidebar:
     st.header("Inputs")
     subject = st.text_input("Subject", value="Math")
-    grades = st.multiselect("Grade Level(s)", ["Grade 1", "Grade 2", "Grade 3"], default=["Grade 3"])
+    grades = st.multiselect("Grade Level(s)", ["Preschool", "Kindergarten", "Grade 1", "Grade 2", "Grade 3", "Grade 4", "Grade 5", "Grade 6"]
     resource_type = st.selectbox("Resource Type", ["Worksheet", "Activities", "Lesson Plan"], index=0)
     focus = st.text_input("Focus / Topic", value="Fractions")
     formats = st.multiselect("Formats", ["Printable", "Digital"], default=["Printable", "Digital"])
