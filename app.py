@@ -161,4 +161,3 @@ if st.button("Generate SEO Titles & Descriptions"):
         st.markdown(f"**Title:** {title}")
         st.write(description)
         st.markdown("**SEO Keywords:** " + ", ".join(keywords))
-
