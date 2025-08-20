@@ -113,34 +113,32 @@ def generate_title(subject: str, grades: List[str], resource_type: str, focus: s
     )
     return soft_cap(re.sub(r"\s+", " ", title).strip(), 110)
 
-def generate_description(subject, grades, resource_type, focus, formats, standards, word_goal):
-    grade_text = ", ".join(grades)
-    format_text = " and ".join(formats)
-
-    desc = (
-        f"This {resource_type.lower()} is designed for {grade_text} students learning {subject.lower()}. "
-        f"It provides engaging activities on {focus.lower()} with {format_text} options, so you can easily use it "
-        f"in the classroom or for homework. "
+with st.sidebar:
+    st.header("Inputs")
+    subject = st.text_input("Subject", value="Math")
+    grades = st.multiselect(
+        "Grade Level(s)",
+        [
+            "Preschool",
+            "Kindergarten",
+            "1st Grade",
+            "2nd Grade",
+            "3rd Grade",
+            "4th Grade",
+            "5th Grade",
+            "6th Grade"
+        ],
+        default=["3rd Grade"]
     )
+    resource_type = st.selectbox("Resource Type", ["Worksheet", "Activities", "Lesson Plan"], index=0)
+    focus = st.text_input("Focus / Topic", value="Fractions")
+    formats = st.multiselect("Formats", ["Printable", "Digital"], default=["Printable", "Digital"])
+    standards = st.text_input("Standards (optional)", value="CCSS")
+    word_goal = st.slider("Description target words", 120, 600, 280, step=20)
+    n_variations = st.slider("How many variations?", 1, 5, 3)
 
-    if standards:
-        desc += f"The resource is fully aligned with {standards}, ensuring it meets curriculum expectations. "
-
-    # Expand with teaching benefits
-    desc += (
-        f"Inside, you'll find step-by-step materials that help build student confidence, "
-        f"support differentiation, and save you preparation time. "
-        f"It’s perfect for guided practice, independent work, or review. "
-    )
-
-    # Pad description to hit word goal
-    while len(desc.split()) < word_goal:
-        desc += (
-            " Teachers appreciate how flexible and easy-to-use this resource is, making it a must-have for "
-            "any educator looking to reinforce skills while keeping students engaged. "
-        )
-
-    return desc.strip()
+    st.header("Thumbnail Upload (optional)")
+    thumbnail_file = st.file_uploader("Upload a product thumbnail (PNG or JPEG)", type=["png", "jpeg"])
 
 
 # -----------------------------
