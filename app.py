@@ -1,3 +1,10 @@
+import streamlit as st
+import nltk
+from PIL import Image
+# (other imports)
+
+# ⬇️ This must come before any other Streamlit calls
+st.set_page_config(page_title="TPT SEO Generator", page_icon="📚", layout="wide")
 # app.py
 import re
 import csv
