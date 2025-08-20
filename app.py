@@ -138,19 +138,19 @@ st.title("🧑‍🏫 TPT SEO Generator with Thumbnail Support")
 with st.sidebar:
     st.header("Inputs")
     subject = st.text_input("Subject", value="Math")
-    grades = st.multiselect(
+   grades = st.multiselect(
     "Grade Level(s)",
     [
         "Preschool",
         "Kindergarten",
-        "Grade 1",
-        "Grade 2",
-        "Grade 3",
-        "Grade 4",
-        "Grade 5",
-        "Grade 6"
+        "1st Grade",
+        "2nd Grade",
+        "3rd Grade",
+        "4th Grade",
+        "5th Grade",
+        "6th Grade"
     ],
-    default=["Grade 3"]
+    default=["3rd Grade"]
 )
 
     resource_type = st.selectbox("Resource Type", ["Worksheet", "Activities", "Lesson Plan"], index=0)
